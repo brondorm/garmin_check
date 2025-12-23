@@ -1,1 +1,0 @@
-# Garmin Connect API Backend

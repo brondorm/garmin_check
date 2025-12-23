@@ -1,39 +1,34 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-*.egg-info/
-dist/
-build/
-
-# Environment
-.env
-.env.local
-*.local
-
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+*.iml
 
 # Android
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
-android/*.iml
-android/.idea/
-android/gradle/wrapper/gradle-wrapper.jar
+.gradle/
+build/
+local.properties
+gradle/wrapper/gradle-wrapper.jar
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.hprof
+
+# Kotlin
+*.class
+*.jar
+*.kotlin_module
 
 # macOS
 .DS_Store
 
 # Logs
 *.log
+
+# Environment
+.env
+.env.local

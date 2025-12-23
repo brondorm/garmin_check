@@ -21,9 +21,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        // Build config field for API URL (can be overridden)
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000\"")
     }
 
     buildTypes {
@@ -33,12 +30,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "API_BASE_URL", "\"https://your-server.com\"")
         }
         debug {
             isMinifyEnabled = false
-            // For emulator, use 10.0.2.2 to access host machine
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000\"")
         }
     }
 
@@ -89,11 +83,11 @@ dependencies {
     kapt("com.google.dagger:hilt-compiler:2.48")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
-    // Retrofit + OkHttp
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // OkHttp for direct Garmin Connect API calls
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Gson for JSON parsing
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Encrypted SharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")

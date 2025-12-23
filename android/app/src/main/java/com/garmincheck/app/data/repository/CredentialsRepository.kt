@@ -30,20 +30,10 @@ class CredentialsRepository @Inject constructor(
     /**
      * Save user credentials securely
      */
-    fun saveCredentials(email: String, password: String, token: String) {
+    fun saveCredentials(email: String, password: String) {
         sharedPreferences.edit()
             .putString(KEY_EMAIL, email)
             .putString(KEY_PASSWORD, password)
-            .putString(KEY_TOKEN, token)
-            .apply()
-    }
-
-    /**
-     * Save only the auth token
-     */
-    fun saveToken(token: String) {
-        sharedPreferences.edit()
-            .putString(KEY_TOKEN, token)
             .apply()
     }
 
@@ -58,22 +48,10 @@ class CredentialsRepository @Inject constructor(
     fun getPassword(): String? = sharedPreferences.getString(KEY_PASSWORD, null)
 
     /**
-     * Get stored auth token
-     */
-    fun getToken(): String? = sharedPreferences.getString(KEY_TOKEN, null)
-
-    /**
      * Check if user has stored credentials
      */
     fun hasCredentials(): Boolean {
         return !getEmail().isNullOrEmpty() && !getPassword().isNullOrEmpty()
-    }
-
-    /**
-     * Check if user has a valid session token
-     */
-    fun hasToken(): Boolean {
-        return !getToken().isNullOrEmpty()
     }
 
     /**
@@ -83,30 +61,6 @@ class CredentialsRepository @Inject constructor(
         sharedPreferences.edit()
             .remove(KEY_EMAIL)
             .remove(KEY_PASSWORD)
-            .remove(KEY_TOKEN)
-            .apply()
-    }
-
-    /**
-     * Clear only the token (keep email/password for re-login)
-     */
-    fun clearToken() {
-        sharedPreferences.edit()
-            .remove(KEY_TOKEN)
-            .apply()
-    }
-
-    /**
-     * Get API URL (could be configurable in the future)
-     */
-    fun getApiUrl(): String? = sharedPreferences.getString(KEY_API_URL, null)
-
-    /**
-     * Save custom API URL
-     */
-    fun saveApiUrl(url: String) {
-        sharedPreferences.edit()
-            .putString(KEY_API_URL, url)
             .apply()
     }
 
@@ -114,7 +68,5 @@ class CredentialsRepository @Inject constructor(
         private const val PREFS_NAME = "encrypted_credentials"
         private const val KEY_EMAIL = "garmin_email"
         private const val KEY_PASSWORD = "garmin_password"
-        private const val KEY_TOKEN = "auth_token"
-        private const val KEY_API_URL = "api_url"
     }
 }

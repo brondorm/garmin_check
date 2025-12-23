@@ -1,6 +1,5 @@
 package com.garmincheck.app.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,17 +11,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.garmincheck.app.data.model.DashboardData
+import com.garmincheck.app.data.garmin.DashboardHealthData
 import com.garmincheck.app.ui.components.*
 import com.garmincheck.app.ui.theme.GarminColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    data: DashboardData?,
+    data: DashboardHealthData?,
     isLoading: Boolean,
     errorMessage: String?,
+    userName: String?,
     onRefresh: () -> Unit,
+    onExport: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -30,12 +31,33 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "Dashboard",
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Column {
+                        Text(
+                            text = "Dashboard",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        if (userName != null) {
+                            Text(
+                                text = userName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = GarminColors.TextSecondary
+                            )
+                        }
+                    }
                 },
                 actions = {
+                    // Export button
+                    IconButton(
+                        onClick = onExport,
+                        enabled = data != null && !isLoading
+                    ) {
+                        Icon(
+                            Icons.Default.FileDownload,
+                            contentDescription = "Export JSON",
+                            tint = if (data != null) GarminColors.Cyan else GarminColors.LightGray
+                        )
+                    }
+                    // Refresh button
                     IconButton(onClick = onRefresh, enabled = !isLoading) {
                         if (isLoading) {
                             CircularProgressIndicator(
@@ -51,6 +73,7 @@ fun DashboardScreen(
                             )
                         }
                     }
+                    // Logout button
                     IconButton(onClick = onLogout) {
                         Icon(
                             Icons.Default.Logout,
@@ -90,7 +113,15 @@ fun DashboardScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = GarminColors.Cyan)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(color = GarminColors.Cyan)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Fetching data from Garmin...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = GarminColors.TextSecondary
+                            )
+                        }
                     }
                 }
             }
@@ -100,7 +131,7 @@ fun DashboardScreen(
 
 @Composable
 private fun DashboardContent(
-    data: DashboardData,
+    data: DashboardHealthData,
     modifier: Modifier = Modifier
 ) {
     Column(

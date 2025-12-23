@@ -1,259 +1,218 @@
 # Garmin Connect Health Dashboard
 
-A mobile-first health data dashboard that retrieves data from Garmin Connect using the unofficial python-garminconnect library.
+A standalone Android app that fetches health data directly from your Garmin Connect account and exports it to JSON. No backend server required!
 
 ## Architecture
 
 ```
-┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
-│  Android App    │ ──── │  FastAPI Backend │ ──── │ Garmin Connect  │
-│ (Jetpack Compose)│ REST │   (Python 3.11)  │      │   (Unofficial)  │
-└─────────────────┘      └──────────────────┘      └─────────────────┘
+┌─────────────────────┐                ┌─────────────────┐
+│   Android App       │ ──── HTTPS ──→ │ Garmin Connect  │
+│  (Jetpack Compose)  │                │   (SSO Auth)    │
+└─────────────────────┘                └─────────────────┘
+         │
+         ↓
+    📄 JSON Export
 ```
 
 ## Features
 
-- **Secure Authentication**: Credentials stored using Android EncryptedSharedPreferences
+- **Direct Garmin Connect Integration**: No backend server needed - the app communicates directly with Garmin Connect
+- **Secure Authentication**: Credentials stored using Android EncryptedSharedPreferences (AES-256)
+- **Auto-login**: Remembers your credentials for seamless experience
 - **Real-time Health Data**:
-  - HRV (Heart Rate Variability) with status
+  - HRV (Heart Rate Variability) with status indicator
   - Heart Rate (resting, min, max, average)
   - Sleep metrics (score, deep/REM/light stages)
   - Stress levels
   - Body Battery
   - Step count
+- **JSON Export**: Share/export your health data as JSON file
 - **Dark Theme UI**: Garmin-inspired minimalist design
 - **Pull to Refresh**: Update data on demand
-- **Error Handling**: Network errors, authentication failures
+- **Error Handling**: Network errors, invalid credentials, session expiry
+
+## Screenshots
+
+The app features a dark theme inspired by Garmin's design language:
+
+- **Login Screen**: Clean email/password form with Garmin branding
+- **Dashboard**: Cards showing HRV, Heart Rate, Sleep, Stress, Body Battery, and Steps
+- **Export**: One-tap JSON export via Android share sheet
 
 ## Tech Stack
 
-### Backend
-- Python 3.11+
-- FastAPI
-- python-garminconnect
-- Pydantic
-- Docker
-
-### Android
-- Kotlin
-- Jetpack Compose
-- Hilt (Dependency Injection)
-- Retrofit + OkHttp
-- Coroutines + Flow
-- EncryptedSharedPreferences
+- **Kotlin** - Modern Android development
+- **Jetpack Compose** - Declarative UI
+- **Hilt** - Dependency Injection
+- **OkHttp** - HTTP client for Garmin SSO authentication
+- **Gson** - JSON serialization
+- **Coroutines + Flow** - Async operations
+- **EncryptedSharedPreferences** - Secure credential storage
 
 ## Quick Start
 
-### 1. Deploy Backend
-
-#### Using Docker (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/garmin_check.git
-cd garmin_check
-
-# Start the backend
-docker-compose up -d
-
-# Check logs
-docker-compose logs -f garmin-api
-```
-
-#### Manual Installation
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### 2. Test API
-
-```bash
-# Health check
-curl http://localhost:8000/
-
-# Login
-curl -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "your@email.com", "password": "yourpassword"}'
-
-# Get dashboard data (with token)
-curl http://localhost:8000/api/v1/health/dashboard \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-### 3. Build Android App
-
-#### Prerequisites
-- Android Studio Hedgehog or later
+### Prerequisites
+- Android Studio Hedgehog (2023.1.1) or later
 - JDK 17+
 - Android SDK 34
+- Android device/emulator with Android 8.0+ (API 26+)
 
-#### Configuration
+### Build & Run
 
-1. Open `android/` folder in Android Studio
-
-2. Update API URL in `app/build.gradle.kts`:
-   ```kotlin
-   // For emulator (default)
-   buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000\"")
-
-   // For production
-   buildConfigField("String", "API_BASE_URL", "\"https://your-server.com\"")
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/garmin_check.git
+   cd garmin_check
    ```
 
-3. Build and run:
+2. Open `android/` folder in Android Studio
+
+3. Sync Gradle and build:
    ```bash
    cd android
    ./gradlew assembleDebug
    ```
 
-## API Endpoints
+4. Run on device/emulator
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Health check |
-| POST | `/api/v1/auth/login` | Authenticate with Garmin |
-| POST | `/api/v1/auth/logout` | Logout |
-| GET | `/api/v1/health/dashboard` | Get dashboard data |
-| GET | `/api/v1/health/full` | Get complete health data |
-| POST | `/api/v1/health/fetch` | Fetch data (direct auth) |
+5. Login with your Garmin Connect credentials
 
-### Request/Response Examples
+## Usage
 
-#### Login
+### Login
+1. Enter your Garmin Connect email and password
+2. Tap "Sign In"
+3. Credentials are securely stored for auto-login
+
+### View Health Data
+- Dashboard shows today's health metrics
+- Tap refresh icon to update data
+- Data is fetched directly from Garmin Connect
+
+### Export to JSON
+1. Tap the download icon in the top bar
+2. Choose how to share (save to files, send via messenger, etc.)
+3. JSON file includes all raw health data
+
+### Logout
+- Tap the logout icon to clear credentials and session
+
+## Exported JSON Format
+
 ```json
-// Request
-POST /api/v1/auth/login
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-// Response
-{
-  "success": true,
-  "message": "Authentication successful",
-  "token": "abc123..."
-}
-```
-
-#### Dashboard Data
-```json
-// Response
 {
   "date": "2024-01-15",
-  "fetched_at": "2024-01-15T10:30:00",
-  "hrv_status": "BALANCED",
-  "hrv_value": 45,
-  "hrv_weekly_avg": 42,
-  "resting_hr": 58,
-  "min_hr": 52,
-  "max_hr": 145,
-  "sleep_score": 82,
-  "total_sleep_hours": 7.5,
-  "stress_level": 28,
-  "body_battery_high": 95,
-  "body_battery_low": 25,
-  "total_steps": 8543
+  "fetchedAt": "2024-01-15T10:30:00",
+  "stats": {
+    "totalSteps": 8543,
+    "totalDistanceMeters": 6234.5,
+    "activeCalories": 450,
+    "restingHeartRate": 58,
+    "bodyBatteryHigh": 95,
+    "bodyBatteryLow": 25
+  },
+  "sleep": {
+    "dailySleep": {
+      "totalSleepSeconds": 27000,
+      "deepSleepSeconds": 5400,
+      "lightSleepSeconds": 14400,
+      "remSleepSeconds": 7200,
+      "sleepScores": {
+        "overall": { "value": 82 }
+      }
+    }
+  },
+  "heartRate": {
+    "restingHeartRate": 58,
+    "minHeartRate": 52,
+    "maxHeartRate": 145
+  },
+  "stress": {
+    "overallStressLevel": 28,
+    "lowStressDuration": 420,
+    "mediumStressDuration": 180
+  },
+  "hrv": {
+    "hrvSummary": {
+      "weeklyAvg": 42,
+      "lastNight": 45,
+      "status": "BALANCED"
+    }
+  }
 }
 ```
-
-## Production Deployment
-
-### Backend with HTTPS (nginx)
-
-1. Get SSL certificate (Let's Encrypt):
-   ```bash
-   certbot certonly --standalone -d your-domain.com
-   ```
-
-2. Create `nginx.conf`:
-   ```nginx
-   server {
-       listen 443 ssl;
-       server_name your-domain.com;
-
-       ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-       ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-
-       location / {
-           proxy_pass http://garmin-api:8000;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-       }
-   }
-   ```
-
-3. Uncomment nginx service in `docker-compose.yml`
-
-### Security Considerations
-
-- **Never commit credentials** - Use environment variables
-- **Use HTTPS in production** - SSL/TLS is required for mobile apps
-- **Session tokens expire** after 24 hours
-- **Garmin may block** frequent authentication attempts
 
 ## Project Structure
 
 ```
 garmin_check/
-├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py          # FastAPI app
-│   │   ├── garmin_client.py # Garmin Connect wrapper
-│   │   └── models.py        # Pydantic models
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── .env.example
-├── android/
-│   ├── app/
-│   │   └── src/main/
-│   │       ├── java/com/garmincheck/app/
-│   │       │   ├── data/           # API & Repository
-│   │       │   ├── di/             # Hilt modules
-│   │       │   ├── ui/             # Compose screens
-│   │       │   ├── MainActivity.kt
-│   │       │   └── GarminCheckApp.kt
-│   │       ├── res/
-│   │       └── AndroidManifest.xml
-│   ├── build.gradle.kts
-│   └── settings.gradle.kts
-├── docker-compose.yml
-└── README.md
+└── android/
+    ├── app/
+    │   └── src/main/
+    │       ├── java/com/garmincheck/app/
+    │       │   ├── data/
+    │       │   │   ├── garmin/           # Garmin Connect client
+    │       │   │   │   ├── GarminConnectClient.kt
+    │       │   │   │   └── GarminModels.kt
+    │       │   │   └── repository/       # Data repositories
+    │       │   │       ├── CredentialsRepository.kt
+    │       │   │       └── GarminRepository.kt
+    │       │   ├── di/                   # Hilt DI modules
+    │       │   ├── ui/
+    │       │   │   ├── components/       # Reusable UI components
+    │       │   │   ├── screens/          # Login & Dashboard screens
+    │       │   │   └── theme/            # Garmin dark theme
+    │       │   ├── MainActivity.kt
+    │       │   └── GarminCheckApp.kt
+    │       ├── res/
+    │       └── AndroidManifest.xml
+    ├── build.gradle.kts
+    └── settings.gradle.kts
 ```
 
 ## Troubleshooting
 
-### "Invalid credentials" error
-- Verify your Garmin Connect email/password
-- Try logging into connect.garmin.com manually first
-- Wait a few minutes if you've made too many attempts
+### "Invalid email or password"
+- Verify your Garmin Connect credentials at [connect.garmin.com](https://connect.garmin.com)
+- Garmin may temporarily block login after too many failed attempts - wait a few minutes
 
-### "Connection error" on Android
-- Check if backend is running: `curl http://your-server:8000/`
-- For emulator, use `10.0.2.2` instead of `localhost`
-- Ensure `android:usesCleartextTraffic="true"` for HTTP (dev only)
+### "Two-factor authentication is enabled"
+- The app doesn't support 2FA/MFA yet
+- Temporarily disable 2FA in your Garmin account settings to use this app
 
-### No data returned
-- Some metrics require a Garmin device that tracks them
-- Data may not be available for the current day yet
-- Try specifying a previous date: `?target_date=2024-01-14`
+### "Login failed"
+- Check your internet connection
+- Garmin's SSO servers may be temporarily unavailable
+- Try again in a few minutes
+
+### No HRV/Sleep data
+- Some metrics require specific Garmin devices (e.g., HRV needs compatible watches)
+- Data may not be synced from your device yet
+- Some data is only available after a full night's sleep
+
+### App crashes on login
+- Clear app data and try again
+- Make sure you're running Android 8.0 or later
+
+## Security Notes
+
+- **Credentials are encrypted** using Android's EncryptedSharedPreferences (AES-256-GCM)
+- **No data is sent to third parties** - the app only communicates with Garmin's servers
+- **Session cookies** are stored in memory only and cleared on logout
+- **Exported JSON** may contain sensitive health data - share responsibly
+
+## Known Limitations
+
+- No support for two-factor authentication (2FA/MFA)
+- Garmin may change their authentication flow, which could break the app
+- Some health metrics require specific Garmin devices
+- Rate limiting: too many requests may result in temporary blocks
 
 ## Disclaimer
 
-This project uses the unofficial python-garminconnect library. It is not affiliated with or endorsed by Garmin. Use at your own risk. Garmin may change their API at any time, which could break this integration.
+This project uses unofficial Garmin Connect API endpoints. It is **not affiliated with or endorsed by Garmin**. Use at your own risk. Garmin may change their API at any time, which could break this integration.
+
+The app is intended for personal use to access your own health data.
 
 ## License
 

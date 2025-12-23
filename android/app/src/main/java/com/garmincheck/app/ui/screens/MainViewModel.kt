@@ -1,42 +1,72 @@
 package com.garmincheck.app.ui.screens
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.garmincheck.app.data.model.ApiResult
-import com.garmincheck.app.data.model.DashboardData
+import com.garmincheck.app.data.garmin.*
 import com.garmincheck.app.data.repository.GarminRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 data class MainUiState(
     val isLoggedIn: Boolean = false,
     val isLoading: Boolean = false,
-    val dashboardData: DashboardData? = null,
-    val errorMessage: String? = null
+    val isAutoLogging: Boolean = false,
+    val dashboardData: DashboardHealthData? = null,
+    val errorMessage: String? = null,
+    val exportedFile: File? = null,
+    val userName: String? = null
 )
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: GarminRepository
+    private val repository: GarminRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    // Store full data for export
+    private var fullHealthData: GarminHealthData? = null
+
     init {
-        checkLoginStatus()
+        checkAndAutoLogin()
     }
 
-    private fun checkLoginStatus() {
-        val isLoggedIn = repository.isLoggedIn()
-        _uiState.value = _uiState.value.copy(isLoggedIn = isLoggedIn)
+    private fun checkAndAutoLogin() {
+        if (repository.hasSavedCredentials()) {
+            viewModelScope.launch {
+                _uiState.value = _uiState.value.copy(isAutoLogging = true)
 
-        if (isLoggedIn) {
-            refreshData()
+                when (val result = repository.autoLogin()) {
+                    is GarminAuthResult.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            isLoggedIn = true,
+                            isAutoLogging = false,
+                            userName = result.displayName
+                        )
+                        refreshData()
+                    }
+                    is GarminAuthResult.Error -> {
+                        _uiState.value = _uiState.value.copy(
+                            isAutoLogging = false,
+                            errorMessage = "Auto-login failed: ${result.message}"
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -48,29 +78,28 @@ class MainViewModel @Inject constructor(
             )
 
             when (val result = repository.login(email, password)) {
-                is ApiResult.Success -> {
+                is GarminAuthResult.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isLoggedIn = true,
-                        isLoading = false
+                        isLoading = false,
+                        userName = result.displayName
                     )
                     refreshData()
                 }
-                is ApiResult.Error -> {
+                is GarminAuthResult.Error -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = result.message
                     )
                 }
-                is ApiResult.Loading -> {}
             }
         }
     }
 
     fun logout() {
-        viewModelScope.launch {
-            repository.logout()
-            _uiState.value = MainUiState(isLoggedIn = false)
-        }
+        repository.logout()
+        fullHealthData = null
+        _uiState.value = MainUiState(isLoggedIn = false)
     }
 
     fun refreshData() {
@@ -80,30 +109,90 @@ class MainViewModel @Inject constructor(
                 errorMessage = null
             )
 
-            when (val result = repository.getDashboardData()) {
-                is ApiResult.Success -> {
+            // Get full data for potential export
+            when (val fullResult = repository.getFullHealthData()) {
+                is GarminResult.Success -> {
+                    fullHealthData = fullResult.data
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        dashboardData = result.data,
+                        dashboardData = fullResult.data.toDashboard(),
                         errorMessage = null
                     )
                 }
-                is ApiResult.Error -> {
-                    if (result.code == 401) {
-                        _uiState.value = MainUiState(isLoggedIn = false)
+                is GarminResult.Error -> {
+                    if (fullResult.message.contains("Not authenticated") ||
+                        fullResult.message.contains("Session expired")) {
+                        // Try to re-authenticate
+                        when (val reAuth = repository.autoLogin()) {
+                            is GarminAuthResult.Success -> {
+                                refreshData() // Retry
+                            }
+                            is GarminAuthResult.Error -> {
+                                _uiState.value = MainUiState(
+                                    isLoggedIn = false,
+                                    errorMessage = "Session expired. Please login again."
+                                )
+                            }
+                        }
                     } else {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            errorMessage = result.message
+                            errorMessage = fullResult.message
                         )
                     }
                 }
-                is ApiResult.Loading -> {}
             }
+        }
+    }
+
+    fun exportToJson(): File? {
+        val data = fullHealthData ?: return null
+
+        return try {
+            val json = repository.exportToJson(data)
+            val fileName = "garmin_health_${data.date}.json"
+            val file = File(context.cacheDir, fileName)
+            file.writeText(json)
+
+            _uiState.value = _uiState.value.copy(exportedFile = file)
+            file
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Failed to export: ${e.message}"
+            )
+            null
+        }
+    }
+
+    fun shareJson(context: Context) {
+        val file = exportToJson() ?: return
+
+        try {
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            context.startActivity(Intent.createChooser(intent, "Share Health Data"))
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Failed to share: ${e.message}"
+            )
         }
     }
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
+    fun clearExportedFile() {
+        _uiState.value = _uiState.value.copy(exportedFile = null)
     }
 }
