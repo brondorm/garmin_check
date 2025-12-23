@@ -1,0 +1,25 @@
+#!/bin/sh
+
+#
+# Gradle wrapper script for UNIX
+#
+
+# Determine the Java command to use
+if [ -n "$JAVA_HOME" ] ; then
+    JAVACMD="$JAVA_HOME/bin/java"
+else
+    JAVACMD="java"
+fi
+
+# Gradle wrapper jar location
+WRAPPER_JAR="gradle/wrapper/gradle-wrapper.jar"
+WRAPPER_PROPERTIES="gradle/wrapper/gradle-wrapper.properties"
+
+# Download gradle-wrapper.jar if it doesn't exist
+if [ ! -f "$WRAPPER_JAR" ]; then
+    echo "Downloading Gradle Wrapper..."
+    mkdir -p gradle/wrapper
+    curl -L -o "$WRAPPER_JAR" "https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar"
+fi
+
+exec "$JAVACMD" -jar "$WRAPPER_JAR" "$@"

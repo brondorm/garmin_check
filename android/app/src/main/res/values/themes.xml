@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.GarminCheck" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/garmin_black</item>
+        <item name="android:navigationBarColor">@color/garmin_black</item>
+        <item name="android:windowBackground">@color/garmin_black</item>
+    </style>
+</resources>

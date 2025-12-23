@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Garmin Dark Theme Colors -->
+    <color name="garmin_black">#FF121212</color>
+    <color name="garmin_dark_gray">#FF1E1E1E</color>
+    <color name="garmin_gray">#FF2C2C2C</color>
+    <color name="garmin_light_gray">#FF3C3C3C</color>
+    <color name="garmin_cyan">#FF00D4AA</color>
+    <color name="garmin_cyan_dark">#FF00A080</color>
+    <color name="garmin_blue">#FF2196F3</color>
+    <color name="garmin_orange">#FFFF9800</color>
+    <color name="garmin_red">#FFFF5252</color>
+    <color name="garmin_purple">#FFB388FF</color>
+    <color name="garmin_white">#FFFFFFFF</color>
+    <color name="garmin_text_secondary">#FFB0B0B0</color>
+</resources>
