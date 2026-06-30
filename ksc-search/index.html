@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Поиск похожих багов — KSC Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ───────────────────────── Header ───────────────────────── -->
+  <header class="topbar">
+    <div class="topbar__inner">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 2C8.27 2 2 8.27 2 16s6.27 14 14 14 14-6.27 14-14S23.73 2 16 2Zm0 5.6a8.4 8.4 0 0 1 8.4 8.4c0 .8-.11 1.57-.32 2.3l-6.5-6.5a2.24 2.24 0 0 0-3.16 0l-6.5 6.5A8.4 8.4 0 0 1 16 7.6Z" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="brand__name">Kaspersky</span>
+        <span class="brand__sub">KSC&nbsp;Search</span>
+      </div>
+      <div class="topbar__tag">Поиск похожих багов</div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <h1 class="page__title">Поиск похожих багов</h1>
+      <p class="page__lead">
+        Перед заведением нового бага опишите проблему своими словами и проверьте,
+        нет ли уже похожего. Задайте зону поиска фильтрами.
+      </p>
+
+      <!-- ───────────────────── 1. Filters ───────────────────── -->
+      <section class="card" aria-labelledby="filters-title">
+        <h2 id="filters-title" class="card__title">
+          <span class="card__step">1</span> Зона поиска
+        </h2>
+
+        <div class="filters">
+          <!-- Iterations -->
+          <div class="filter">
+            <div class="filter__label">Итерация</div>
+            <div class="chips" id="iterationChips" role="group" aria-label="Итерация"></div>
+          </div>
+
+          <!-- State -->
+          <div class="filter">
+            <div class="filter__label">Статус</div>
+            <div class="chips" id="stateChips" role="group" aria-label="Статус"></div>
+          </div>
+
+          <!-- Work item type -->
+          <div class="filter">
+            <div class="filter__label">Тип Work Item</div>
+            <div class="chips" id="typeChips" role="group" aria-label="Тип Work Item"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────────────── 2. Query ───────────────────── -->
+      <section class="card" aria-labelledby="query-title">
+        <h2 id="query-title" class="card__title">
+          <span class="card__step">2</span> Суть проблемы
+        </h2>
+
+        <textarea
+          id="queryInput"
+          class="query"
+          rows="4"
+          placeholder="Например: При сохранении политики получаем ошибку 5053"
+          aria-label="Описание проблемы"></textarea>
+
+        <div class="query__actions">
+          <span class="query__hint" id="queryHint">Опишите проблему, чтобы начать поиск</span>
+          <button id="searchBtn" class="btn btn--primary" type="button" disabled>
+            <span class="btn__label">Искать</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ───────────────────── 3. Results ───────────────────── -->
+      <section class="results" aria-labelledby="results-title" aria-live="polite">
+        <div class="results__head">
+          <h2 id="results-title" class="card__title card__title--bare">
+            <span class="card__step">3</span> Результаты
+          </h2>
+          <span id="resultsCount" class="results__count" hidden></span>
+        </div>
+
+        <div id="resultsBody" class="results__body">
+          <!-- Initial idle state -->
+          <div class="state state--idle" id="stateIdle">
+            <div class="state__icon">🔍</div>
+            <p class="state__text">Здесь появятся похожие баги после поиска.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>KSC Search · внутренний инструмент команды</span>
+      <span class="footer__note">Прототип на данных-заглушках</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
