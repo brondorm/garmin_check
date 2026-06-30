@@ -12,14 +12,14 @@
 /* ─────────────── Справочники фильтров ─────────────── */
 
 // Список итераций (мультивыбор — набор галочек, НЕ диапазон «от-до»).
-const ITERATIONS = ['16.1', '16.2', '16.3', '16.10'];
+const ITERATIONS = ['15.1', '15.2', '15.3', '15.4', '16.0', '16.1', '16.2', '16.3', '17.0'];
 
 // Категории статуса. Одна категория -> несколько реальных значений state.
 // Конкретный маппинг уточнят позже; здесь — рабочая заготовка.
 const STATE_CATEGORIES = [
-  { id: 'open', label: 'Открытые', states: ['Active', 'New', 'Open', 'Proposed'] },
+  { id: 'active', label: 'Active', states: ['Active', 'New', 'Open', 'Proposed'] },
   { id: 'resolved', label: 'Resolved', states: ['Resolved', 'Fixed'] },
-  { id: 'closed', label: 'Закрытые', states: ['Closed', 'Done', 'Removed'] },
+  { id: 'closed', label: 'Closed', states: ['Closed', 'Done', 'Removed'] },
 ];
 
 // Тип Work Item. Пока только Bug, список заложен на расширение.

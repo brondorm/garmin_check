@@ -388,7 +388,7 @@ body {
 }
 .tag b { color: var(--text); font-weight: 700; }
 .tag--type { color: var(--green); border-color: var(--green-strong); }
-.tag--state-open b { color: #5ad1ff; }
+.tag--state-active b { color: #5ad1ff; }
 .tag--state-resolved b { color: var(--green); }
 .tag--state-closed b { color: var(--text-mut); }
 
